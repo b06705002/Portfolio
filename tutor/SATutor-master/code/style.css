@@ -1,0 +1,113 @@
+.jumbotron {
+  background:
+    linear-gradient(rgba(0, 0, 0, 1),
+    rgba(0, 0, 0, 0.7),
+    rgba(0, 0, 0, 1)),
+    url("./giraffe.jpg");
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  background-color: black;
+  min-height: 100vh;
+  color: whitesmoke !important;
+}
+
+.push-down {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.heading {
+  font-size: 10vmax;
+  text-shadow: 0.5vmax 0.5vmax 5px #4B0082;
+  mix-blend-mode: screen;
+  animation: fadeIn 2.4s linear forwards;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.navbar {
+  z-index: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  color: whitesmoke !important;
+  background-color: rgba(0, 0, 0, 0);
+}
+
+.nav-link.active {
+  color: Silver !important;
+  border-bottom: 2px solid;
+}
+
+.text-color {
+  color: whitesmoke !important;
+}
+
+.bgc-transparent {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+table {
+  border-radius: 10px;
+}
+
+.table td,
+.table th {
+  border-top: 1px solid rgba(222, 226, 230, 0.6);
+}
+
+.table thead th {
+  border-bottom: 2px solid rgba(222, 226, 230, 0.6);
+}
+
+.table > tbody > tr > td {
+     vertical-align: middle;
+}
+
+.checkbox {
+  width: 23px;
+  height: 23px;
+  cursor: pointer;
+  background: rgba(250, 250, 250, 0.5);
+  color: black;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: none;
+  border-radius: 3px;
+}
+
+td {
+  position: relative;
+}
+
+.search {
+  color: whitesmoke;
+}
+
+.search:hover {
+  color: whitesmoke;
+  text-decoration: none;
+}
+
+.search-input, .search-input:focus {
+  background: transparent;
+  color: whitesmoke;
+}
+
+.search-input::placeholder {
+  color: whitesmoke;
+}

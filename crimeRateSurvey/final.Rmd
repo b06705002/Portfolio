@@ -1,0 +1,202 @@
+---
+title: "final"
+output: html_document
+---
+
+```{r}
+final<-read.csv("C://Users/黃啟宏/Documents//final.csv")
+criminal = final$
+temple = final_分局犯罪率$廟宇密度
+temperature = final_分局犯罪率$溫度
+population = final_分局犯罪率$人口密度
+city = final_分局犯罪率$`是否為直轄市(1是0否)`
+
+Chi_Square_Normal_Test <- function(x, n) {
+  break_p <- vector("double", length = n + 1)
+	x_mean <- mean(x)
+	x_stdev <- sqrt(var(x))
+	break_p[1] <- min(x) - 1
+	size <- length(x)
+	for(j in 2:n) {
+	break_p[j] <- qnorm((j-1)/n, mean = x_mean, sd = x_stdev, lower.tail = TRUE, log.p = FALSE)
+	}
+	break_p[n+1] <- max(x) + 1
+	p_x <- hist(x, breaks = break_p, plot = FALSE)
+	x_Counts <- p_x$counts
+	Norm_counts <- vector("double", length = n)
+	for(j in 1:n) {
+	Norm_counts[j] <- size * 1/n
+	}
+	cat("The Expected Counts: ", Norm_counts, "\n")
+	p_SE <- hist(x, breaks = break_p, main="Histogram of Standardized Errors")
+	normal_fit <- chisq.test(x_Counts, p = Norm_counts, rescale.p = TRUE)
+	Chitest_value <- pchisq(normal_fit$statistic, df = n - 3, lower.tail=FALSE)
+  return(Chitest_value)
+}
+
+Run_Test <- function(x) {
+  size <- length(x)
+  Run_Count <- vector("double", length = size)
+  x_median <- median(x)
+  x_cat <- x > x_median
+  Run_Count[1] <- 1
+  for(j in 2:size) {
+     if (x_cat[j] == x_cat[j-1]) {
+         Run_Count[j] <- Run_Count[j-1]
+     } else {
+         Run_Count[j] <- Run_Count[j-1] + 1
+             } 
+  }
+  n1 <- sum(x_cat == 'TRUE')
+  n2 <- sum(x_cat == 'FALSE')
+  Run_Mean <- 2*n1*n2/(n1+n2) + 1
+  Run_S <- sqrt(2*n1*n2*(2*n1*n2-n1-n2)/(n1+n2)^2/(n1+n2-1))
+  Run_Z = (Run_Count[size] - Run_Mean) / Run_S
+  if (Run_Z < 0) {
+      Run_Pvalue <- pnorm(Run_Count[size], mean=Run_Mean, sd=Run_S, lower.tail=TRUE)*2
+  } else {
+      Run_Pvalue <- pnorm(Run_Count[size], mean=Run_Mean, sd=Run_S, lower.tail=FALSE)*2
+  } 
+  Run_Return_V <- vector("double", length = 3)
+  Run_Return_V[1] <- n1
+  Run_Return_V[2] <- n2
+  Run_Return_V[3] <- Run_Count[size]
+  if (n1 > 20 || n2 > 20 || (n1+n2) > 40)
+    return (Run_Pvalue)
+  return(Run_Return_V)
+}
+
+Durbin_Watson_Test <- function(x) {
+   x_square_sum <- sum(x*x)
+   size <- length(x)
+   x_d <- vector("double", length = size)
+   x_d[1] = 0
+   for(j in 2:size) {
+      x_d[j] <- x[j] - x[j - 1]
+      }
+   d <- sum(x_d*x_d) / x_square_sum
+    return(d)
+}
+
+standarized_errors_MR <- function(y, x) {
+  n <- length(y)
+  k <- ncol(x)
+  x1 <- vector("double", length = n)
+  for(j in 1:n) {
+    x1[j] <- 1
+  }
+  Matrix_X <- cbind(x1, x)
+  Matrix_Y <- cbind(y)
+  Matrix_H <-  Matrix_X%*%solve(t(Matrix_X)%*%Matrix_X)%*%t(Matrix_X)
+  Matrix_YP <-  Matrix_H%*%Matrix_Y
+  y_p <- Matrix_YP[,1]
+  h <- vector("double", length = n)
+  Error <- vector("double", length = n)
+  Standard_E <- vector("double", length = n)
+  D <- vector("double", length = n)
+  se <- sqrt(sum((y - y_p)^2)/(n - k - 1))
+  for(i in 1:n) {
+    h[i] <- Matrix_H[i,i]
+    Error[i] <- y[i] - y_p[i]
+    Standard_E[i] <- Error[i] / (se * sqrt(1 - h[i]))
+    D[i] <- (y[i] - y_p[i])^2 * h[i] / ((k -1) * se^2 * (1 - h[i])^2)
+  }
+  SEhD <- cbind(Standard_E, h, D)
+  return(SEhD)
+}
+
+city1= city==0
+city0= city==1
+
+plot(temple[city1], criminal[city1],col="blue")
+points(temple[city0], criminal[city0],col="red")
+abline(lm(criminal[city1]~ temple[city1]),col="blue")
+abline(lm(criminal[city0]~ temple[city0]),col="red")
+plot(population[city1], criminal[city1],col="blue")
+points(population[city0], criminal[city0],col="red")
+abline(lm(criminal[city1]~population[city1]),col="blue")
+abline(lm(criminal[city0]~population[city0]),col="red")
+plot(temperature[city1], criminal[city1],col="blue")
+points(temperature[city0], criminal[city0],col="red")
+abline(lm(criminal[city1]~ temperature[city1]),col="blue")
+abline(lm(criminal[city0]~ temperature[city0]),col="red")
+
+
+data = cbind(temple, population, city, temperature)
+model = lm(criminal ~ data)
+print(summary(model))
+cat("# # # # The ANOVA Table # # # ","\n")
+print(anova(model))
+
+d = standarized_errors_MR(criminal,data)
+SE = d[,1]
+```
+
+```{r}
+cor(cbind(criminal,data))
+
+cat("# # # # The Durbin Watson Test # # # ","\n")
+DW_test <- Durbin_Watson_Test(SE)
+print(DW_test)
+cat("# # # # Run Test # # # ","\n")
+cat(Run_Test(SE))
+```
+
+```{r}
+
+cat("# # # # Chi Square Test # # # ","\n")
+Chi_Square_Normal_Test(SE,5)
+Criminal_predict <- predict(model, data.frame(data), interval="none")
+plot(Criminal_predict, SE)
+```
+
+```{r}
+h = d[,2]
+D = d[,3]
+n <- length(criminal)
+Outliers <- abs(SE) > 2
+cat("Outliers: ", which(Outliers), "\n")
+Inf_Obs <- h > 3 * 4 / n
+cat("Influential observations: ", which(Inf_Obs), "\n")
+Inf_Obs <- D > 1
+cat("Influential observations(Cook's): ", which(Inf_Obs))
+```
+
+```{r}
+data2 = data[-60,]
+data2 = data2[-60,]
+data2 = data2[,-3]
+criminal2 = criminal[-60]
+criminal2 = criminal2[-60]
+
+model2 = lm(criminal2 ~ data2)
+print(summary(model2))
+cat("# # # # The ANOVA Table # # # ","\n")
+print(anova(model2))
+```
+
+```{r}
+d = standarized_errors_MR(criminal2,data2)
+SE2 = d[,1]
+
+cor(cbind(criminal2,data2))
+
+cat("# # # # The Durbin Watson Test # # # ","\n")
+DW_test <- Durbin_Watson_Test(SE2)
+print(DW_test)
+cat("# # # # Run Test # # # ","\n")
+cat(Run_Test(SE2))
+cat("\n","# # # # Chi Square Test # # # ","\n")
+Chi_Square_Normal_Test(SE2,5)
+Criminal_predict <- predict(model2, data.frame(data2), interval="none")
+plot(Criminal_predict, SE2)
+h = d[,2]
+D = d[,3]
+n <- length(criminal)
+Outliers <- abs(SE2) > 2
+cat("Outliers: ", which(Outliers), "\n")
+Inf_Obs <- h > 3 * 4 / n
+cat("Influential observations: ", which(Inf_Obs), "\n")
+Inf_Obs <- D > 1
+cat("Influential observations(Cook's): ", which(Inf_Obs))
+```
